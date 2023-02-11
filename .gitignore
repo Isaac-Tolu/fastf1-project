@@ -1,0 +1,9 @@
+# pipenv
+Pipfile
+Pipfile.lock
+
+# testing
+test_fastf1.ipynb
+
+# fastf1 caching
+test_cache/
