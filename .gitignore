@@ -1,6 +1,7 @@
-# pipenv
+# virtual environments
 Pipfile
 Pipfile.lock
+fastf1-venv/
 
 # testing
 test_fastf1.ipynb
