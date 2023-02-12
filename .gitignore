@@ -9,7 +9,7 @@ test_fastf1.ipynb
 test_cache/
 
 # data
-data/
+# data/
 
 # airflow
 airflow/logs/
