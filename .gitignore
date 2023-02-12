@@ -10,3 +10,7 @@ test_cache/
 
 # data
 data/
+
+# airflow
+logs/
+.env
