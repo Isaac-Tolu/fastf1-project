@@ -11,6 +11,8 @@ from fastf1.core import DataNotLoadedError
 
 YEAR = sys.argv[1]
 
+fastf1.Cache.enable_cache("fastf1_cache/")
+
 def main():
     """
     Get the event schedule
