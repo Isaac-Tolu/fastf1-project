@@ -1,12 +1,13 @@
+import os
 import datetime
 
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.bash import BashOperator
 
-AIRFLOW_HOME = ...
-FASTF1_PYTHON_EXECUTABLE_LOC = ...
-EXTRACT_CODE_LOC = ...
+AIRFLOW_HOME = os.environ.get("AIRFLOW_HOME")
+FASTF1_VENV_NAME = "fastf1-venv"
+YEAR = "{{ execution_date.strftime('%Y') }}"
 
 with DAG(
     dag_id="fastf1_extract_dag",
@@ -15,7 +16,9 @@ with DAG(
     end_date=datetime(2022, 12, 31),
     schedule_interval="@yearly",
     max_active_runs=1,
-    catchup=True
+    catchup=True,
+    owner="airflow",
+    retries=1
 ) as dag:
 
     begin_task = EmptyOperator(
@@ -24,7 +27,7 @@ with DAG(
 
     extract_task = BashOperator(
         task_id="extract fastf1 data",
-        bash_command=f"{FASTF1_PYTHON_EXECUTABLE_LOC} {EXTRACT_CODE_LOC} ..arguments"
+        bash_command=f"cd {AIRFLOW_HOME} && source {FASTF1_VENV_NAME}/bin/activate && python extract/fastf1_extract.py {YEAR}"
     )
 
     end_task = EmptyOperator(
