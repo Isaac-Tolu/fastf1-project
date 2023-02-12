@@ -9,9 +9,11 @@ from fastf1.core import Laps, Session, SessionResults, Telemetry
 from fastf1.events import EventSchedule
 from fastf1.core import DataNotLoadedError
 
-YEAR = sys.argv[1]
+YEAR = int(sys.argv[1])
 
-fastf1.Cache.enable_cache("fastf1_cache/")
+cache_path = Path("fastf1_cache/")
+cache_path.mkdir(exist_ok=True)
+fastf1.Cache.enable_cache(cache_path)
 
 def main():
     """
@@ -110,7 +112,7 @@ def get_event_schedule(year:int) -> EventSchedule:
 
     return schedule_fin
 
-def get_all_statistics(session:Session) -> dict[str, pd.DataFrame]:
+def get_all_statistics(session:Session) -> "dict[str, pd.DataFrame]":
     """Returns all desired statistics for a particular event session"""
     
     return dict(
@@ -146,9 +148,9 @@ def get_car_data(session:Session) -> "DataFrame|None":
     """Returns car data for all drivers or None if not loaded"""
 
     try:
-        car_dict:dict[str, Telemetry] = session.car_data
+        car_dict:"dict[str, Telemetry]" = session.car_data
 
-        car_list:list[Telemetry] = [
+        car_list:"list[Telemetry]" = [
             car_data.assign(DriverNumber=driver_num)
             for driver_num, car_data in car_dict.items()
         ]
@@ -161,9 +163,9 @@ def get_car_position_data(session:Session) -> "DataFrame|None":
     """Returns car position data or None if not loaded"""
 
     try:
-        car_position_dict:dict[str, Telemetry] = session.pos_data
+        car_position_dict:"dict[str, Telemetry]" = session.pos_data
 
-        car_position_list:list[Telemetry] = [
+        car_position_list:"list[Telemetry]" = [
             car_data.assign(DriverNum=driver_num)
             for driver_num, car_data in car_position_dict.items()
         ]
@@ -186,7 +188,7 @@ def get_race_control_messages(session:Session) -> "DataFrame|dict":
 
     return session.race_control_messages
 
-def write_statistics(stats_dict:dict[str, pd.DataFrame], path:Path):
+def write_statistics(stats_dict:"dict[str, pd.DataFrame]", path:Path):
     """Write all statistics to disk"""
 
     for name, stats in stats_dict.items():
@@ -195,3 +197,6 @@ def write_statistics(stats_dict:dict[str, pd.DataFrame], path:Path):
         else:
             # logging
             ...
+
+if __name__ == "__main__":
+    main()
