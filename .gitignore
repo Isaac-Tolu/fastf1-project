@@ -12,5 +12,5 @@ test_cache/
 data/
 
 # airflow
-logs/
-.env
+airflow/logs/
+airflow/.env
