@@ -3,10 +3,10 @@ Pipfile
 Pipfile.lock
 
 # testing
-test_fastf1.ipynb
+test/
 
 # fastf1 caching
-test_cache/
+fastf1_cache/
 
 # data
 data/
@@ -15,3 +15,4 @@ data/
 airflow/logs/
 airflow/.env
 airflow/dags/__pycache__/
+airflow/pg_init_scripts/create_tables.sql

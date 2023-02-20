@@ -1,59 +1,35 @@
-## Data Structure
-- Check the data here
-- It is structured in this manner:
-    ```
-    2018/
-        - schedule.csv
-        schedule/
-            Australian_Grand_Prix/
-                Qualifying/
-                    - car_data.csv
-                    - car_position_data.csv
-                    - driver_info_and_results_data.csv
-                    - lap_data.csv
-                    - rcm_data.csv
-                    - weather_data.csv
-                Race/
-                    - car_data.csv
-                    - car_position_data.csv
-                    - driver_info_and_results_data.csv
-                    - lap_data.csv
-                    - rcm_data.csv
-                    - weather_data.csv
-            Austrian_Grand_Prix/
-            ...
-    2019/
-    ...
-    ```
-- CSV files and what they contain:
-    - schedule.csv: Schedule for the season. It contains the different events and the time for the Qualifying and Race sessions.
-    - car_data.csv: Contains car telemetry data for each driver
-    - car_position.csv: Contains car position data for each driver
-    - driver_info_and_results_data.csv: Contains result of the event. It also contains complete driver information
-    - lap_data.csv: Conatins full data about the different laps for each driver
-    - rcm_data.csv: Contains data about race control messages
-    - weather_data.csv: Contains data about the weather for that event
+# fastf1-project
 
-## Project Flow
-- Check the extract python file here
-- It contains a main function through which all other functions are accessed
-- Here is the main flow:
-    - The event schedule data for the year is first gotten and saved to disk
-    - We iterate over each event in the event schedule
-    - For each event, the qualifying and race sessions are gotten
-    - Statistics for the qualifying session is gotten and saved to disk
-    - Statistics for the race session is gotten and saved to disk
+## Project flow
+- When running the containers initially, the database is created through the postgres entrypoint. This [file](./airflow/pg_init_scripts/multiple_db.sh) runs before any container starts running
+- When the dag is initialised, it's sole job is run this python [file](./extract/fastf1_extract.py) rom 2019 till 2022
+- The python gets the event schedule for each year and structures it according to the database schema
+- For each session, the results and lap statistics are gotten and also sent to the database
 
+## Database Structure
+- Fastf1 library data is sent to the database following the star schema
+    ![schema](./artifacts/schema.png)
+- The database contains 2 dimension tables: `dim_sessions` and `dim_drivers` that contain information about sessions and drivers
+- There are 2 main fact tables: `fact_results` and `fact_lap_statistics` which contain race results and drivers lap statistics respectively
+- One of the fact table `fact_lap_statistics` is further normalised into another table: `fact_lap_telemetry_statistics` which contain telemetry information for each lap.
+- I should note here that in an ideal star schema, there should be only one fact table, but due to the complexity of the data, normalising the facts of the data made it easier to reasn about.
 
 ## Recreating the project
 - Go to the airflow directory
     ```
     cd airflow/
     ```
+- You have run airflow before so run these commands first to start afresh
+    ```
+    docker-compose down
+    docker volume rm airflow_postgres-db-volume
+    rm -r logs
+    ```
 - Run these commands
     ```
     echo -e "AIRFLOW_UID=$(id -u)" > .env
     mkdir logs/
+    mkdir ../fastf1_cache/
     docker-compose build
     docker-compose up airflow-init
     docker-compose up
@@ -61,3 +37,15 @@
 - Check periodically through `docker ps` whether the webserver is healthy
 - Once it is, go to `localhost:8080` on your webbrowser. Use `airflow` as username and password
 - Trigger the DAG on the airflow UI
+- To check results on the database as the dag is running, use `psql` or any postgres client you have to log in to postgres. The database is available on port `5432`. The username is `airflow` and the database name is `fastf1`
+    ```
+    psql -h 0.0.0.0 -U airflow -d fastf1
+    ```
+- You can run these queries on the database after year 2019 has finished running on the Airflow UI to test that data entered and everything is working pefectly
+    ```sql
+    select * from dim_sessions;
+    select * from dim_drivers;
+    select * from fact_results;
+    select * from fact_lap_statistics;
+    select * from fact_lap_telemetry_statistics;
+    ```
