@@ -41,6 +41,12 @@
     ```
     psql -h 0.0.0.0 -U airflow -d fastf1
     ```
+- If you can access data from the terminal, go into the docker container and access postgres there
+    ```
+    docker exec -it <container_id> bash
+
+    psql -U airflow -d fastf1
+    ```
 - You can run these queries on the database after year 2019 has finished running on the Airflow UI to test that data entered and everything is working pefectly
     ```sql
     select * from dim_sessions;
