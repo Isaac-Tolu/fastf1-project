@@ -39,9 +39,9 @@
 - Trigger the DAG on the airflow UI
 - To check results on the database as the dag is running, use `psql` or any postgres client you have to log in to postgres. The database is available on port `5432`. The username is `airflow` and the database name is `fastf1`
     ```
-    psql -h 0.0.0.0 -U airflow -d fastf1
+    psql -h localhost -p 5434 -U airflow -d fastf1
     ```
-- If you can access data from the terminal, go into the docker container and access postgres there
+- If you can't access data from the terminal, go into the docker container and access postgres there
     ```
     docker exec -it <container_id> bash
 
