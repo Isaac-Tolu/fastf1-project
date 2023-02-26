@@ -57,6 +57,7 @@ psql -U $POSTGRES_USER -d $POSTGRES_MULTIPLE_DATABASES <<-EOSQL
 		Status text,
 		Time interval,
 		Points float,
+		primary key(SessionID, DriverID),
 		foreign key (SessionID) references dim_sessions(SessionID),
 		foreign key (DriverID) references dim_drivers(DriverID)
 	);
@@ -97,30 +98,36 @@ psql -U $POSTGRES_USER -d $POSTGRES_MULTIPLE_DATABASES <<-EOSQL
 		WindDirection int,
 		WindSpeed float,
 		foreign key (SessionID) references dim_sessions (SessionID),
-		foreign key (DriverID) references dim_drivers (DriverID)
+		foreign key (DriverID) references dim_drivers (DriverID),
+		unique(SessionID, DriverID, LapID)
 	);
 
-	create table fact_lap_telemetry_statistics (
+	create table fact_lap_car_statistics (
 		LapID text,
 		Date timestamp,
-		SessionTime interval,
-		DriverAhead text,
-		DistanceToDriverAhead float,
-		Time interval,
 		RPM int,
 		Speed int,
 		nGear int,
 		Throttle int,
 		Brake boolean,
-		DRS int,                    
-		Source text,
-		Distance float,
-		RelativeDistance float,
+		DRS int,
+		Time interval,
+		SessionTime interval,
+		foreign key (LapID) references fact_lap_statistics (LapID),
+		unique(LapID, Date)
+	);
+
+	create table fact_lap_position_statistics (
+		LapID text,
+		Date timestamp,
 		Status text,
 		X int,
 		Y int,
-		Z int,                 
-		foreign key (LapID) references fact_lap_statistics (LapID)
+		Z int,
+		Time interval,
+		SessionTime interval,
+		foreign key (LapID) references fact_lap_statistics (LapID),
+		unique(LapID, Date)
 	);
 EOSQL
 
