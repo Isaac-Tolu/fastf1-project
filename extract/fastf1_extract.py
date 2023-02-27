@@ -208,9 +208,8 @@ def get_lap_with_weather_info(session:Session, session_id:str):
 
         joined_data = joined_data.assign(SessionID=session_id).rename({"DriverNumber": "DriverID"}, axis=1)
 
-        joined_data["DriverID"] = joined_data["DriverID"] + '_' + joined_data["Team"] 
-        joined_data["LapID"] = session_id + '_' + joined_data["DriverID"].astype("str") + '_' + joined_data["LapNumber"].astype(str)
-
+        joined_data["DriverID"] = joined_data["DriverID"] + '_' + joined_data["Team"]
+        joined_data["LapID"] = session_id + '_' + joined_data["DriverID"].astype("str") + '_' + joined_data["LapNumber"].astype(int).astype(str)
         joined_data.columns = joined_data.columns.str.lower()
         time_delta_cols = [
             "time", "laptime", "pitouttime", "pitintime",
