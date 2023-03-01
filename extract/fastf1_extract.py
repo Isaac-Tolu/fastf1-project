@@ -156,7 +156,7 @@ def get_latest_results(engine):
             group by x.sessiontype;
         """
 
-    results = conn.exec_driver_sql(stmt)
+        results = conn.exec_driver_sql(stmt)
     return sorted(results.fetchall())
 
 def get_session_info(year:int):
