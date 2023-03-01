@@ -38,15 +38,19 @@ def main():
     latest_results = get_latest_results(engine)
     if len(latest_results) == 2:
         checkpoint = latest_results[1]
-    else:
+    elif len(latest_results == 1):
         checkpoint = latest_results[0]
+    else:
+        checkpoint = None
 
     for _, sc in session_info.iterrows():
         round_number = sc["roundnumber"]
         session_id = sc["sessionid"]
         session_type = sc["sessiontype"]
 
-        if (session_type == "Qualifying") and (checkpoint[0] == "Race"):
+        if checkpoint is None:
+            pass
+        elif (session_type == "Qualifying") and (checkpoint[0] == "Race"):
             logger.info(f"Session already ran: {session_id}")
             continue # All Qualifying has already been sent to database 
         elif (session_type == "Qualifying") and (session_id < checkpoint[1]):
