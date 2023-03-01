@@ -32,7 +32,7 @@
     mkdir ../fastf1_cache/
     docker-compose build
     docker-compose up airflow-init
-    docker-compose up
+    docker-compose up -d
     ```
 - Check periodically through `docker ps` whether the webserver is healthy
 - Once it is, go to `localhost:8080` on your webbrowser. Use `airflow` as username and password
