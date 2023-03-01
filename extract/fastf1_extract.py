@@ -38,7 +38,7 @@ def main():
     latest_results = get_latest_results(engine)
     if len(latest_results) == 2:
         checkpoint = latest_results[1]
-    elif len(latest_results == 1):
+    elif len(latest_results) == 1:
         checkpoint = latest_results[0]
     else:
         checkpoint = None
