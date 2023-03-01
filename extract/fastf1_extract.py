@@ -35,10 +35,27 @@ def main():
     upsert_df(session_info, "dim_sessions", engine)
     logger.info(f"Upserted session information for year {YEAR}")
 
+    latest_results = get_latest_results(engine)
+    if len(latest_results) == 2:
+        checkpoint = latest_results[1]
+    else:
+        checkpoint = latest_results[0]
+
     for _, sc in session_info.iterrows():
         round_number = sc["roundnumber"]
         session_id = sc["sessionid"]
         session_type = sc["sessiontype"]
+
+        if (session_type == "Qualifying") and (checkpoint[0] == "Race"):
+            logger.info(f"Session already ran: {session_id}")
+            continue # All Qualifying has already been sent to database 
+        elif (session_type == "Qualifying") and (session_id < checkpoint[1]):
+            logger.info(f"Session already ran: {session_id}")
+            continue # All Qualifying below the checkpoint has been sent to database
+        elif (session_type == "Race") and (session_id < checkpoint[1]):
+            logger.info(f"Session already ran: {session_id}")
+            continue # All Race below the checkpoint has been sent to database
+
 
         session = fastf1.get_session(YEAR, round_number, session_type)
 
@@ -74,10 +91,10 @@ def main():
                     upsert_df(pos_data[1], "fact_lap_position_statistics", engine, match_columns=["lapid", "date"])
                     logger.info(f"Upserted position statistics for lap {pos_data[0]}")
 
-                time.sleep(1)
+                time.sleep(3)
 
             logger.info(f"Upserted car and position statistics for session {session_id}")
-            time.sleep(5)
+            time.sleep(10)
 
 
 def upsert_df(df, table_name, engine, match_columns=None):
@@ -125,6 +142,22 @@ def upsert_df(df, table_name, engine, match_columns=None):
         )
         df.to_sql("temp_table", conn, if_exists="append", index=False)
         conn.exec_driver_sql(stmt)
+
+def get_latest_results(engine):
+
+    with engine.begin() as conn:
+        stmt = """\
+            select x.sessiontype, max(x.sessionid)
+            from (
+                select distinct d.sessionid, d.sessiontype
+                from fact_lap_statistics f join dim_sessions d
+                    on d.sessionid = f.sessionid
+                where year = 2019) x
+            group by x.sessiontype;
+        """
+
+    results = conn.exec_driver_sql(stmt)
+    return sorted(results.fetchall())
 
 def get_session_info(year:int):
     """Gets event session data for a particular year.
