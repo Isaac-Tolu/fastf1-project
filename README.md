@@ -62,18 +62,18 @@
     ```
     - For 2019,
     ```
-    airflow backfill -s 2019-01-01 -e 2019-12-31 --reset_dagruns fastf1_extract
+    airflow dags backfill -s 2019-01-01 -e 2019-12-31 --reset-dagruns fastf1_extract
     ```
     - For 2020,
     ```
-    airflow backfill -s 2020-01-01 -e 2020-12-31 --reset_dagruns fastf1_extract
+    airflow dags backfill -s 2020-01-01 -e 2020-12-31 --reset-dagruns fastf1_extract
     ``` 
     - For 2021,
     ```
-    airflow backfill -s 2021-01-01 -e 2021-12-31 --reset_dagruns fastf1_extract
+    airflow dags backfill -s 2021-01-01 -e 2021-12-31 --reset-dagruns fastf1_extract
     ```
     - For 2022,
     ```
-    airflow backfill -s 2022-01-01 -e 2022-12-31 --reset_dagruns fastf1_extract
+    airflow dags backfill -s 2022-01-01 -e 2022-12-31 --reset-0dagruns fastf1_extract
     ```
     - It has already been set to not repeat what has been run before
