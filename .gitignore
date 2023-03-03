@@ -16,3 +16,6 @@ airflow/logs/
 airflow/.env
 airflow/dags/__pycache__/
 airflow/pg_init_scripts/create_tables.sql
+
+# model
+artifacts/schema.excalidraw
