@@ -37,29 +37,35 @@ def main():
 
     latest_results = get_latest_results(engine)
     if len(latest_results) == 2:
-        checkpoint = latest_results[1]
+        result_type = latest_results[1][0]
+        latest_rn = int(latest_results[1][1].split("_")[1])
+        # checkpoint = latest_results[1]
     elif len(latest_results) == 1:
-        checkpoint = latest_results[0]
+        result_type = latest_results[0][0]
+        latest_rn = int(latest_results[0][1].split("_")[1])
     else:
-        checkpoint = None
+        result_type = None
 
     for _, sc in session_info.iterrows():
         round_number = sc["roundnumber"]
         session_id = sc["sessionid"]
         session_type = sc["sessiontype"]
 
-        if checkpoint is None:
+        if result_type is None:
             pass
-        elif (session_type == "Qualifying") and (checkpoint[0] == "Race"):
-            logger.info(f"Session already ran: {session_id}")
-            continue # All Qualifying has already been sent to database 
-        elif (session_type == "Qualifying") and (session_id < checkpoint[1]):
-            logger.info(f"Session already ran: {session_id}")
-            continue # All Qualifying below the checkpoint has been sent to database
-        elif (session_type == "Race") and (session_id < checkpoint[1]):
-            logger.info(f"Session already ran: {session_id}")
-            continue # All Race below the checkpoint has been sent to database
-
+        elif session_type == "Qualifying":
+            if result_type == "Race":
+                logger.info(f"Session already ran: {session_id}")
+                continue
+            elif (result_type == "Qualifying") and (int(round_number) < latest_rn):
+                logger.info(f"Session already ran: {session_id}")
+                continue
+        elif session_type == "Race":
+            if result_type == "Qualifying":
+                pass
+            elif (result_type == "Race") and (int(round_number) < latest_rn):
+                logger.info(f"Session already ran: {session_id}")
+                continue
 
         session = fastf1.get_session(YEAR, round_number, session_type)
 
