@@ -35,37 +35,36 @@ def main():
     upsert_df(session_info, "dim_sessions", engine)
     logger.info(f"Upserted session information for year {YEAR}")
 
-    # latest_results = get_latest_results(engine)
-    # if len(latest_results) == 2:
-    #     result_type = latest_results[1][0]
-    #     latest_rn = int(latest_results[1][1].split("_")[1])
-    #     # checkpoint = latest_results[1]
-    # elif len(latest_results) == 1:
-    #     result_type = latest_results[0][0]
-    #     latest_rn = int(latest_results[0][1].split("_")[1])
-    # else:
-    #     result_type = None
+    latest_results = get_latest_results(engine, str(YEAR))
+    if len(latest_results) == 2:
+        result_type = latest_results[1][0]
+        latest_rn = int(latest_results[1][1].split("_")[1])
+    elif len(latest_results) == 1:
+        result_type = latest_results[0][0]
+        latest_rn = int(latest_results[0][1].split("_")[1])
+    else:
+        result_type = None
 
     for _, sc in session_info.iterrows():
         round_number = sc["roundnumber"]
         session_id = sc["sessionid"]
         session_type = sc["sessiontype"]
 
-        # if result_type is None:
-        #     pass
-        # elif session_type == "Qualifying":
-        #     if result_type == "Race":
-        #         logger.info(f"Session already ran: {session_id}")
-        #         continue
-        #     elif (result_type == "Qualifying") and (int(round_number) < latest_rn):
-        #         logger.info(f"Session already ran: {session_id}")
-        #         continue
-        # elif session_type == "Race":
-        #     if result_type == "Qualifying":
-        #         pass
-        #     elif (result_type == "Race") and (int(round_number) < latest_rn):
-        #         logger.info(f"Session already ran: {session_id}")
-        #         continue
+        if result_type is None:
+            pass
+        elif session_type == "Qualifying":
+            if result_type == "Race":
+                logger.info(f"Session already ran: {session_id}")
+                continue
+            elif (result_type == "Qualifying") and (int(round_number) < latest_rn):
+                logger.info(f"Session already ran: {session_id}")
+                continue
+        elif session_type == "Race":
+            if result_type == "Qualifying":
+                pass
+            elif (result_type == "Race") and (int(round_number) < latest_rn):
+                logger.info(f"Session already ran: {session_id}")
+                continue
 
         session = fastf1.get_session(YEAR, round_number, session_type)
 
@@ -164,21 +163,21 @@ def upsert_df(df, table_name, engine, match_columns=None):
         df.to_sql("temp_table", conn, if_exists="append", chunksize=10000, index=False)
         conn.exec_driver_sql(stmt)
 
-# def get_latest_results(engine):
+def get_latest_results(engine, year):
 
-#     with engine.begin() as conn:
-#         stmt = """\
-#             select x.sessiontype, max(x.sessionid)
-#             from (
-#                 select distinct d.sessionid, d.sessiontype
-#                 from fact_lap_statistics f join dim_sessions d
-#                     on d.sessionid = f.sessionid
-#                 where year = 2019) x
-#             group by x.sessiontype;
-#         """
+    with engine.begin() as conn:
+        stmt = f"""\
+            select x.sessiontype, max(x.sessionid)
+            from (
+                select distinct d.sessionid, d.sessiontype
+                from fact_lap_statistics f join dim_sessions d
+                    on d.sessionid = f.sessionid
+                where year = {year}) x
+            group by x.sessiontype;
+        """
 
-#         results = conn.exec_driver_sql(stmt)
-#     return sorted(results.fetchall())
+        results = conn.exec_driver_sql(stmt)
+    return sorted(results.fetchall())
 
 def get_session_info(year:int):
     """Gets event session data for a particular year.
