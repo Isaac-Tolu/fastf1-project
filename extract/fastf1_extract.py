@@ -35,36 +35,10 @@ def main():
     upsert_df(session_info, "dim_sessions", engine)
     logger.info(f"Upserted session information for year {YEAR}")
 
-    # latest_results = get_latest_results(engine, str(YEAR))
-    # if len(latest_results) == 2:
-    #     result_type = latest_results[1][0]
-    #     latest_rn = int(latest_results[1][1].split("_")[1])
-    # elif len(latest_results) == 1:
-    #     result_type = latest_results[0][0]
-    #     latest_rn = int(latest_results[0][1].split("_")[1])
-    # else:
-    #     result_type = None
-
     for _, sc in session_info.iterrows():
         round_number = sc["roundnumber"]
         session_id = sc["sessionid"]
         session_type = sc["sessiontype"]
-
-        # if result_type is None:
-        #     pass
-        # elif session_type == "Qualifying":
-        #     if result_type == "Race":
-        #         logger.info(f"Session already ran: {session_id}")
-        #         continue
-        #     elif (result_type == "Qualifying") and (int(round_number) < latest_rn):
-        #         logger.info(f"Session already ran: {session_id}")
-        #         continue
-        # elif session_type == "Race":
-        #     if result_type == "Qualifying":
-        #         pass
-        #     elif (result_type == "Race") and (int(round_number) < latest_rn):
-        #         logger.info(f"Session already ran: {session_id}")
-        #         continue
 
         session = fastf1.get_session(YEAR, round_number, session_type)
 
@@ -95,26 +69,6 @@ def main():
             if position_info is not None:
                 upsert_df(position_info, "fact_position_statistics", engine, match_columns=["sessionid", "driverid", "date"])
                 logger.info(f"Upserted position statistics for driver {driver} in session {session_id}")
-
-            # lap_gen = session.laps.iterlaps()
-            # for lap in lap_gen:
-            #     car_data = get_car_data_of_lap(lap[1], session_id)
-            #     pos_data = get_pos_data_of_lap(lap[1], session_id)
-
-            #     if (car_data is None) or (pos_data is None):
-            #         logger.warning(f"No telemetry data for session {session_id}")
-            #         break
-            #     else:
-            #         upsert_df(car_data[1], "fact_lap_car_statistics", engine, match_columns=["lapid", "date"])
-            #         logger.info(f"Upserted car statistics for lap {car_data[0]}")
-
-            #         upsert_df(pos_data[1], "fact_lap_position_statistics", engine, match_columns=["lapid", "date"])
-            #         logger.info(f"Upserted position statistics for lap {pos_data[0]}")
-
-            #     time.sleep(3)
-
-            # logger.info(f"Upserted car and position statistics for session {session_id}")
-            # time.sleep(10)
 
 
 def upsert_df(df, table_name, engine, match_columns=None):
@@ -162,22 +116,6 @@ def upsert_df(df, table_name, engine, match_columns=None):
         )
         df.to_sql("temp_table", conn, if_exists="append", chunksize=10000, index=False)
         conn.exec_driver_sql(stmt)
-
-# def get_latest_results(engine, year):
-
-#     with engine.begin() as conn:
-#         stmt = f"""\
-#             select x.sessiontype, max(x.sessionid)
-#             from (
-#                 select distinct d.sessionid, d.sessiontype
-#                 from fact_lap_statistics f join dim_sessions d
-#                     on d.sessionid = f.sessionid
-#                 where year = {year}) x
-#             group by x.sessiontype;
-#         """
-
-#         results = conn.exec_driver_sql(stmt)
-#     return sorted(results.fetchall())
 
 def get_session_info(year:int):
     """Gets event session data for a particular year.
@@ -283,11 +221,6 @@ def get_car_data(session:Session, session_id:str, driver_num:str):
     try:
         car_data = session.car_data[driver_num]
 
-        # car_list = [
-        #     car_data.assign(sessionid=session_id).assign(driverid=get_driver_id(session, driver_num))
-        #     for driver_num, car_data in car_dict.items()
-        # ]
-
         car_data = car_data.assign(sessionid=session_id).assign(driverid=get_driver_id(session, driver_num))
 
         car_data.columns = car_data.columns.str.lower()
@@ -305,11 +238,6 @@ def get_position_data(session:Session, session_id:str, driver_num:str):
 
     try:
         pos_data = session.pos_data[driver_num]
-
-        # pos_list = [
-        #     pos_data.assign(sessionid=session_id).assign(driverid=get_driver_id(session, driver_num))
-        #     for driver_num, pos_data in pos_dict.items()
-        # ]
 
         pos_data = pos_data.assign(sessionid=session_id).assign(driverid=get_driver_id(session, driver_num))
 
@@ -329,45 +257,6 @@ def get_driver_id(session:Session, driver_num:str):
     driver_info = session.get_driver(driver_num)
     driver_id = driver_info["DriverNumber"] + '_' + driver_info["TeamName"]
     return driver_id
-
-
-# def get_car_data_of_lap(lap:Lap, session_id:str):
-#     """Gets car data for a lap in a session"""
-
-#     try:
-#         car_data = lap.get_car_data()
-#         lap_id = session_id + '_' + str(lap["DriverNumber"]) + '_' + lap["Team"] + '_' + str(int(lap["LapNumber"]))
-#         car_data["LapID"] = lap_id
-#         car_data = car_data.loc[:, ~(car_data.columns == 'Source')]
-
-#         car_data.columns = car_data.columns.str.lower()
-
-#         td_cols = ["time", "sessiontime"]
-#         car_data = convert_td_cols_to_str(car_data, td_cols)
-
-#         return lap_id, car_data
-#     except DataNotLoadedError:
-#         logger.warning(f"No car data information for lap {lap_id}")
-#         return None
-    
-# def get_pos_data_of_lap(lap:Lap, session_id:str):
-#     """Gets car position data for a lap in a session"""
-
-#     try:
-#         pos_data = lap.get_pos_data()
-#         lap_id = session_id + '_' + str(lap["DriverNumber"]) + '_' + lap["Team"] + '_' + str(int(lap["LapNumber"]))
-#         pos_data["LapID"] = lap_id
-#         pos_data = pos_data.loc[:, ~(pos_data.columns == 'Source')]
-
-#         pos_data.columns = pos_data.columns.str.lower()
-
-#         td_cols = ["time", "sessiontime"]
-#         pos_data = convert_td_cols_to_str(pos_data, td_cols)
-
-#         return lap_id, pos_data
-#     except DataNotLoadedError:
-#         logger.warning(f"No position data information for lap {lap_id}")
-#         return None
 
 def convert_td_cols_to_str(df: DataFrame, td_cols:list):
     """Utility function for converting timedelta column to string.
